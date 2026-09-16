@@ -96,23 +96,23 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Insert(const KeyType &key) -> bo
 /* 
   atomic size++, and compare to capcaicy
 */
-  // size_t current_size = size_.load();
+  size_t current_size = size_.load();
 
-  // while (current_size<capacity_)
-  // {
-  //   if(size_.compare_exchange_strong(current_size,current_size+1)){
-  //     break;
-  //   }
-  // }
-
-  // if(current_size>capacity_) return false;
-  
-  
+  while (current_size<capacity_)
   {
-    std::lock_guard lock(global_lock_);
-    if(size_.load()==capacity_) return false;
-    size_++;
+    if(size_.compare_exchange_strong(current_size,current_size+1)){
+      break;
+    }
   }
+
+  if(current_size==capacity_) return false;
+  
+  
+  // {
+  //   std::lock_guard lock(global_lock_);
+  //   if(size_.load()==capacity_) return false;
+  //   size_++;
+  // }
   BUSTUB_ENSURE(size_.load()<=capacity_,"size must be less/eq than capacity");
 
   size_t home_bucket = this->hash_fn_(key) % this->capacity_;
@@ -131,6 +131,7 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Insert(const KeyType &key) -> bo
         //   probe_store_.erase(it);
         // }
         // probe_store_.insert(cur_probe);
+
         std::swap(cur_probe,slot.probe_);
         std::swap(cur_key,slot.key_);
       }
@@ -145,7 +146,7 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Insert(const KeyType &key) -> bo
     }
     cur_probe++;
   }
-  std::cout<<"Probe_store size: "<<probe_store_.size()<<std::endl;
+  // std::cout<<"Probe_store size: "<<probe_store_.size()<<std::endl;
   return false;
 }
 
@@ -242,7 +243,16 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::MaxProbeDistance() const -> size
   // std::lock_guard lock(global_lock_);
   // if(probe_store_.empty()) return 0;
   // return *probe_store_.rbegin();
-  return 0;
+  size_t max = 0;
+  // size_t home_bucket = this->hash_fn_(key) % this->capacity_;
+  for(size_t i = 0;i!=capacity_;i++){
+    const HashTableSlot<KeyType>& slot = hash_table_[i];
+    std::lock_guard<std::mutex> g(slot.lock_);
+    // if(slot.state_ == SlotState::EMPTY) return capacity_;
+    // if(slot.state_ != SlotState::OCCUPIED) continue;
+    if(slot.state_ == SlotState::OCCUPIED) max = std::max(max,slot.probe_);
+  }
+  return max;
 }
 
 template class RobinHoodHashSet<int>;
