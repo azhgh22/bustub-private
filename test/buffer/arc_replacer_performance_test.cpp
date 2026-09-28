@@ -39,7 +39,7 @@ TEST(ArcReplacerPerformanceTest, RecordAccessPerformanceTest) {
     arc_replacer.SetEvictable(i, true);
   }
   // Keep accessing pages in middle of the list
-  std::vector<std::thread> threads;
+  // std::vector<std::thread> threads;
   const size_t rounds = 10;
   size_t access_frame_id = 256 << 9;
   std::vector<size_t> access_times;

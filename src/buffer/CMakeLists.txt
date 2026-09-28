@@ -5,7 +5,10 @@ add_library(
         arc_replacer.cpp
         clock_replacer.cpp
         lru_replacer.cpp
-        lru_k_replacer.cpp)
+        lru_k_replacer.cpp
+        list_wrapper.cpp
+        evictable_list_wrapper.cpp
+        )
 
 set(ALL_OBJECT_FILES
         ${ALL_OBJECT_FILES} $<TARGET_OBJECTS:bustub_buffer>

@@ -22,6 +22,9 @@
 #include "common/config.h"
 #include "common/macros.h"
 
+#include "buffer/list_wrapper.h"
+#include "buffer/evictable_list_wrapper.h"
+
 namespace bustub {
 
 enum class AccessType { Unknown = 0, Lookup, Scan, Index };
@@ -62,19 +65,19 @@ class ArcReplacer {
 
  private:
   // TODO(student): implement me! You can replace or remove these member variables as you like.
-  std::list<frame_id_t> mru_;
-  std::list<frame_id_t> mfu_;
-  std::list<page_id_t> mru_ghost_;
-  std::list<page_id_t> mfu_ghost_;
+  EVListWrapper<frame_id_t> mru_;
+  EVListWrapper<frame_id_t> mfu_;
+  ListWrapper<frame_id_t> mru_ghost_;
+  ListWrapper<frame_id_t> mfu_ghost_;
 
   /* record entries in mru_ and mfu_
    * this uses frame_id_t to guarantee no duplicate records for the same
    * frame when they are alive */
-  std::unordered_map<frame_id_t, std::shared_ptr<FrameStatus>> alive_map_;
+  std::unordered_map<frame_id_t, FrameStatus> alive_map_;
   /* record entries in mru_ghost_ and mfu_ghost_
    * this uses page_id_t but not frame_id_t because page_id is the unique
    * identifier in ghost lists */
-  std::unordered_map<page_id_t, std::shared_ptr<FrameStatus>> ghost_map_;
+  // std::unordered_map<page_id_t, std::shared_ptr<FrameStatus>> ghost_map_;
 
   /* alive, evictable entries count */
   [[maybe_unused]] size_t curr_size_{0};
@@ -82,9 +85,10 @@ class ArcReplacer {
   [[maybe_unused]] size_t mru_target_size_{0};
   /* c as in original paper */
   [[maybe_unused]] size_t replacer_size_;
-  std::mutex latch_;
+  std::recursive_mutex latch_;
 
   // TODO(student): You can add member variables / functions as you like.
+  std::optional<ArcStatus> Locate(frame_id_t frame_id, page_id_t page_id);
 };
 
 }  // namespace bustub

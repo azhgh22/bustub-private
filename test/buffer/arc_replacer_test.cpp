@@ -20,7 +20,50 @@
 
 namespace bustub {
 
-TEST(ArcReplacerTest, DISABLED_SampleTest) {
+// TEMPORAL TEST: ASUME EVICTABILITY does not exist
+// after, just make all of them Evictable
+
+TEST(ArcReplacerTest, EveictableFrames1) {
+  ArcReplacer arc_replacer(7);
+  arc_replacer.RecordAccess(1, 1);
+  arc_replacer.RecordAccess(2, 2);
+  arc_replacer.RecordAccess(3, 3);
+  arc_replacer.SetEvictable(1,true);
+  arc_replacer.SetEvictable(2,true);
+  arc_replacer.SetEvictable(3,true);
+  ASSERT_EQ(3, arc_replacer.Size());
+  ASSERT_EQ(1, arc_replacer.Evict());
+}
+
+TEST(ArcReplacerTest, EveictableFrames2) {
+  ArcReplacer arc_replacer(7);
+  arc_replacer.RecordAccess(1, 1);
+  arc_replacer.RecordAccess(2, 2);
+  arc_replacer.RecordAccess(3, 3);
+  arc_replacer.SetEvictable(1,true);
+  arc_replacer.SetEvictable(2,true);
+  arc_replacer.SetEvictable(3,true);
+  ASSERT_EQ(3, arc_replacer.Size());
+  arc_replacer.RecordAccess(1, 1);
+  ASSERT_EQ(2, arc_replacer.Evict());
+}
+
+
+TEST(ArcReplacerTest, EveictableFrame3) {
+  ArcReplacer arc_replacer(7);
+  arc_replacer.RecordAccess(1, 1);
+  arc_replacer.RecordAccess(2, 2);
+  arc_replacer.RecordAccess(3, 3);
+  arc_replacer.RecordAccess(4, 4);
+  arc_replacer.RecordAccess(5, 5);
+  arc_replacer.RecordAccess(6, 6);
+  arc_replacer.SetEvictable(6,true);
+  ASSERT_EQ(1, arc_replacer.Size());
+  ASSERT_EQ(6, arc_replacer.Evict());
+}
+
+
+TEST(ArcReplacerTest, SampleTest) {
   // for the sake of simplicity
   // we use (a, fb) to notate page a on frame b,
   // (a, _) to mark ghost page with page id a
@@ -49,6 +92,7 @@ TEST(ArcReplacerTest, DISABLED_SampleTest) {
   ASSERT_EQ(5, arc_replacer.Size());
   // Record an access for frame 1. Now frame 1 goes into mfu list
   arc_replacer.RecordAccess(1, 1);
+  ASSERT_EQ(5, arc_replacer.Size());
   // Now [][(2,f2), (3,f3), (4,f4), (5,f5), p(6,f6)]![(1,f1)][] p=0
   //
   // Now Evict three pages from the replacer.
@@ -63,12 +107,14 @@ TEST(ArcReplacerTest, DISABLED_SampleTest) {
   // list since we've never seen page 7, this goes into mru list
   arc_replacer.RecordAccess(2, 7);
   arc_replacer.SetEvictable(2, true);
+  ASSERT_EQ(3, arc_replacer.Size());
   // Insert page 2 on frame 3, this should be a hit on mru ghost list
   // since we've just evicted page 2, this goes into mfu list
   // also target size should be bumped up by 1, since mru ghost has
   // size 3 and mfu ghost has size 0
   // starting with x is pageid on ghost list, starting with _ is pinned
   arc_replacer.RecordAccess(3, 2);
+  ASSERT_EQ(3, arc_replacer.Size());
   arc_replacer.SetEvictable(3, true);
   // Now [(3,_), (4,_)][(5,f5), p(6,f6), (7,f2)]![(2,f3), (1,f1)][] p=1
   ASSERT_EQ(4, arc_replacer.Size());
@@ -102,7 +148,7 @@ TEST(ArcReplacerTest, DISABLED_SampleTest) {
   ASSERT_EQ(2, arc_replacer.Evict());
 }
 
-TEST(ArcReplacerTest, DISABLED_SampleTest2) {
+TEST(ArcReplacerTest, SampleTest2) {
   // Test a smaller capacity
   ArcReplacer arc_replacer(3);
   // Fill up the replacer
@@ -126,6 +172,8 @@ TEST(ArcReplacerTest, DISABLED_SampleTest2) {
   arc_replacer.RecordAccess(3, 4);
   arc_replacer.SetEvictable(3, true);
   // Now [(2,_), (3,_)][(4,f3)]![][] p=0
+
+  ASSERT_EQ(1, arc_replacer.Size());
 
   // Access page 1 on frame 2, it should NOT be a hit on
   // the ghost list. Ghost page 2 should be driven out
@@ -164,6 +212,7 @@ TEST(ArcReplacerTest, DISABLED_SampleTest2) {
   // should victimize page 1
   arc_replacer.RecordAccess(3, 5);
   arc_replacer.SetEvictable(3, true);
+  ASSERT_EQ(3, arc_replacer.Size());
   ASSERT_EQ(1, arc_replacer.Evict());
   // Now [][(5,f3)]![(4,f2)][(1,_),(3,_)] p=3
   // Insert page 6 and evict, notice target size is 3,
@@ -198,6 +247,8 @@ TEST(ArcReplacerTest, DISABLED_SampleTest2) {
   arc_replacer.SetEvictable(3, true);
   // Now [][(6,f1),(7,f2),(2,f3)]![][(5,_),(4,_),(1,_)] p=3
 
+  ASSERT_EQ(3, arc_replacer.Size());
+
   // Evict a page 6
   ASSERT_EQ(1, arc_replacer.Evict());
   // Now [(6,_)][(7,f2),(2,f3)]![][(5,_),(4,_),(1,_)] p=3
@@ -207,14 +258,18 @@ TEST(ArcReplacerTest, DISABLED_SampleTest2) {
   arc_replacer.SetEvictable(1, true);
   // Now [][(7,f2),(2,f3),(3,f1)]![][(5,_),(4,_),(1,_)] p=3
 
+  ASSERT_EQ(3, arc_replacer.Size());
   // Finally we evict all pages and see if the order is right,
   // note that target size is 3
   ASSERT_EQ(2, arc_replacer.Evict());
+
+  ASSERT_EQ(2, arc_replacer.Size());
+
   ASSERT_EQ(3, arc_replacer.Evict());
   ASSERT_EQ(1, arc_replacer.Evict());
 }
 
-TEST(ArcReplacerTest, DISABLED_RemoveBehaviorTest) {
+TEST(ArcReplacerTest, RemoveBehaviorTest) {
   // Scenario 1: Remove from empty replacer — should be a no-op
   {
     ArcReplacer arc_replacer(5);
@@ -297,6 +352,8 @@ TEST(ArcReplacerTest, DISABLED_RemoveBehaviorTest) {
     arc_replacer.RecordAccess(0, 30);
     arc_replacer.SetEvictable(0, true);
     // State: [][(31,f1),(32,f2),(30,f0)]![][] p=0
+
+    ASSERT_EQ(3, arc_replacer.Size());
 
     // Evict order from MRU (target=0, all in MRU): f1, f2, f0
     ASSERT_EQ(1, arc_replacer.Evict());
