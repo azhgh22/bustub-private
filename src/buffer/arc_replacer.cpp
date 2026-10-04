@@ -114,32 +114,22 @@ void ArcReplacer::RecordAccess(frame_id_t frame_id, page_id_t page_id, [[maybe_u
     
     std::optional<ArcStatus> location_opt = Locate(frame_id,page_id);    
 
+    BUSTUB_ASSERT(mru_.Size()+mfu_.Size()<=replacer_size_,"T1+T1 must be <= C");
 
     if(!location_opt.has_value()) [[likely]]{
         // new page
         if(mru_.Size()+mru_ghost_.Size()==replacer_size_){
-            if(mru_.Size()<replacer_size_){
-                mru_ghost_.RemoveLru();
-            }else{
-                Evict();
-            }
-            
+            mru_ghost_.RemoveLru();
         }else{
             BUSTUB_ASSERT(mru_.Size()+mru_ghost_.Size()<replacer_size_,"T1+B1 must be < C");
             size_t total = mru_.Size()+mru_ghost_.Size() + mfu_.Size()+mfu_ghost_.Size();
-            if(total>=replacer_size_){
-                if(total==2*replacer_size_){
-                    mfu_ghost_.RemoveLru();
-                }
-                if(mru_.Size()+mfu_.Size()==replacer_size_)
-                    Evict();
+            if(total==2*replacer_size_){
+                mfu_ghost_.RemoveLru();
             }
         }
-
-        // TODO: replace next two lines
-        // mru_.Insert(frame_id,false);
         mru_.Insert(frame_id,false);
         alive_map_.insert({frame_id,FrameStatus(page_id,frame_id,false,ArcStatus::MRU)});
+        BUSTUB_ASSERT(mru_.Size()+mfu_.Size()<=replacer_size_,"T1+T1 must be <= C");
         return;
     }
     
@@ -172,11 +162,9 @@ void ArcReplacer::RecordAccess(frame_id_t frame_id, page_id_t page_id, [[maybe_u
         mfu_ghost_.Remove(page_id);
     }
 
-    if(mru_.Size()+mfu_.Size() == replacer_size_){
-        Evict();
-    }
-    // TODO: replace next two lines
-    // mfu_.Insert(frame_id, false);
+    // if(mru_.Size()+mfu_.Size() == replacer_size_){
+    //     Evict();
+    // }
     mfu_.Insert(frame_id,false);
     alive_map_.insert({frame_id,FrameStatus(page_id,frame_id,false,ArcStatus::MFU)});
     
