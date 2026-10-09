@@ -87,8 +87,7 @@ class DiskScheduler {
   /** The background thread responsible for issuing scheduled requests to the disk manager. */
   std::optional<std::thread> background_thread_;
 
-  void HandleWrite(page_id_t page_id,char* data, std::promise<bool> callback);
-  void HandleRead(page_id_t page_id,char* data, std::promise<bool> callback);
-
+  void HandleWrite(page_id_t page_id, char *data, std::promise<bool> callback);
+  void HandleRead(page_id_t page_id, char *data, std::promise<bool> callback);
 };
 }  // namespace bustub

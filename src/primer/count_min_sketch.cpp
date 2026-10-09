@@ -114,16 +114,14 @@ auto CountMinSketch<KeyType>::TopK(uint16_t k, const std::vector<KeyType> &candi
   /** @TODO(student) Implement this function! */
   std::vector<std::pair<uint32_t, KeyType>> temp(candidates.size());
 
-
   k = std::min(k, static_cast<uint16_t>(candidates.size()));
   std::vector<std::pair<KeyType, uint32_t>> ans;
 
-  for (size_t i=0;i<temp.size();i++) {
+  for (size_t i = 0; i < temp.size(); i++) {
     temp[i] = {this->Count(candidates[i]), candidates[i]};
   }
 
   std::sort(temp.begin(), temp.end());
-
 
   for (size_t i = 1; i <= k; i++) {
     ans.push_back({temp[candidates.size() - i].second, temp[candidates.size() - i].first});

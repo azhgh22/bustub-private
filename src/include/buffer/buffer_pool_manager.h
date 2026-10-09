@@ -72,6 +72,9 @@ class FrameHeader {
   /** @brief The frame ID / index of the frame this header represents. */
   const frame_id_t frame_id_;
 
+  /** @brief The page_id the frame holds. */
+  page_id_t page_id_;
+
   /** @brief The readers / writer latch for this frame. */
   std::shared_mutex rwlatch_;
 
@@ -79,7 +82,7 @@ class FrameHeader {
   std::atomic<size_t> pin_count_;
 
   /** @brief The dirty flag. */
-  bool is_dirty_;
+  std::atomic<bool> is_dirty_;
 
   /**
    * @brief A pointer to the data of the page that this frame holds.
@@ -171,5 +174,8 @@ class BufferPoolManager {
    * stored inside of it. Additionally, you may also want to implement a helper function that returns either a shared
    * pointer to a `FrameHeader` that already has a page's data stored inside of it, or an index to said `FrameHeader`.
    */
+
+  auto LoadPage(page_id_t page_id, AccessType access_type) -> frame_id_t;
+  void FlushPageInternal(frame_id_t frame_id, bool wait);
 };
 }  // namespace bustub

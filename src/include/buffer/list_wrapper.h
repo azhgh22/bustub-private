@@ -1,38 +1,36 @@
 #ifndef LISTWRAPPER_AZ
 #define LISTWRAPPER_AZ
 
+#include <iostream>
 #include <list>
 #include <optional>
-#include <unordered_map>
-#include <iostream>
 #include <set>
+#include <unordered_map>
 
 #include "common/config.h"
 #include "common/macros.h"
 
-namespace bustub
-{
+namespace bustub {
 
 #define timestamp size_t
 
 template <typename KeyType>
-struct ListWrapper{
-protected:
+struct ListWrapper {
+ protected:
   std::list<KeyType> lru_;
-  std::unordered_map<KeyType,typename std::list<KeyType>::iterator> map_;
+  std::unordered_map<KeyType, typename std::list<KeyType>::iterator> map_;
   // std::set<std::pair<timestamp,frame_id_t>> evictables_;
 
-public:
+ public:
   void Print();
-  bool Contains(KeyType key);
-  size_t Size();
+  auto Contains(KeyType key) -> bool;
+  auto Size() -> size_t;
   void Insert(KeyType);
-  void Remove(KeyType key); // removes elem from list
+  void Remove(KeyType key);  // removes elem from list
   void MoveForward(KeyType key);
-  std::optional<KeyType> RemoveLru();
+  auto RemoveLru() -> std::optional<KeyType>;
 };
 
-}
-
+}  // namespace bustub
 
 #endif

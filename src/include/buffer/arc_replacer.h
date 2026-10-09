@@ -22,8 +22,8 @@
 #include "common/config.h"
 #include "common/macros.h"
 
-#include "buffer/list_wrapper.h"
 #include "buffer/evictable_list_wrapper.h"
+#include "buffer/list_wrapper.h"
 
 namespace bustub {
 
@@ -88,7 +88,7 @@ class ArcReplacer {
   std::recursive_mutex latch_;
 
   // TODO(student): You can add member variables / functions as you like.
-  std::optional<ArcStatus> Locate(frame_id_t frame_id, page_id_t page_id);
+  auto Locate(frame_id_t frame_id, page_id_t page_id) -> std::optional<ArcStatus>;
 };
 
 }  // namespace bustub

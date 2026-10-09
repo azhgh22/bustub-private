@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <functional>
 #include <mutex>  // NOLINT
+#include <set>
 #include <string>
 #include <utility>
-#include <set>
 
 #include "common/util/hash_util.h"
 
@@ -59,20 +59,15 @@ struct RobinHoodHash<std::string> {
   }
 };
 
-enum SlotState{
-  EMPTY,
-  OCCUPIED,
-  TOMBSTONE
-};
+enum SlotState { EMPTY, OCCUPIED, TOMBSTONE };
 
-template<typename KeyType>
-struct alignas(64) HashTableSlot{
+template <typename KeyType>
+struct alignas(64) HashTableSlot {
   KeyType key_;
   size_t probe_;
   SlotState state_{SlotState::EMPTY};
   mutable std::mutex lock_;
 };
-
 
 /** A fixed-capacity, concurrent hash set using Robin Hood open addressing. */
 template <typename KeyType, typename Hash = RobinHoodHash<KeyType>, typename KeyEqual = std::equal_to<KeyType>>
@@ -104,9 +99,9 @@ class RobinHoodHashSet {
  private:
   // TODO(student): Define the bucket representation, synchronization
   // primitives, and metadata needed by your implementation.
-  size_t    capacity_;
-  Hash      hash_fn_;
-  KeyEqual  key_equal_fn_;
+  size_t capacity_;
+  Hash hash_fn_;
+  KeyEqual key_equal_fn_;
   std::vector<HashTableSlot<KeyType>> hash_table_;
   std::atomic<size_t> size_;
   std::atomic<size_t> free_slots_;

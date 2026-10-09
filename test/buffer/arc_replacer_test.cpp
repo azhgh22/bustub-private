@@ -28,9 +28,9 @@ TEST(ArcReplacerTest, EveictableFrames1) {
   arc_replacer.RecordAccess(1, 1);
   arc_replacer.RecordAccess(2, 2);
   arc_replacer.RecordAccess(3, 3);
-  arc_replacer.SetEvictable(1,true);
-  arc_replacer.SetEvictable(2,true);
-  arc_replacer.SetEvictable(3,true);
+  arc_replacer.SetEvictable(1, true);
+  arc_replacer.SetEvictable(2, true);
+  arc_replacer.SetEvictable(3, true);
   ASSERT_EQ(3, arc_replacer.Size());
   ASSERT_EQ(1, arc_replacer.Evict());
 }
@@ -40,14 +40,13 @@ TEST(ArcReplacerTest, EveictableFrames2) {
   arc_replacer.RecordAccess(1, 1);
   arc_replacer.RecordAccess(2, 2);
   arc_replacer.RecordAccess(3, 3);
-  arc_replacer.SetEvictable(1,true);
-  arc_replacer.SetEvictable(2,true);
-  arc_replacer.SetEvictable(3,true);
+  arc_replacer.SetEvictable(1, true);
+  arc_replacer.SetEvictable(2, true);
+  arc_replacer.SetEvictable(3, true);
   ASSERT_EQ(3, arc_replacer.Size());
   arc_replacer.RecordAccess(1, 1);
   ASSERT_EQ(2, arc_replacer.Evict());
 }
-
 
 TEST(ArcReplacerTest, EveictableFrame3) {
   ArcReplacer arc_replacer(7);
@@ -57,11 +56,10 @@ TEST(ArcReplacerTest, EveictableFrame3) {
   arc_replacer.RecordAccess(4, 4);
   arc_replacer.RecordAccess(5, 5);
   arc_replacer.RecordAccess(6, 6);
-  arc_replacer.SetEvictable(6,true);
+  arc_replacer.SetEvictable(6, true);
   ASSERT_EQ(1, arc_replacer.Size());
   ASSERT_EQ(6, arc_replacer.Evict());
 }
-
 
 TEST(ArcReplacerTest, SampleTest) {
   // for the sake of simplicity

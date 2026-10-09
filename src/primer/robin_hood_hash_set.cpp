@@ -17,25 +17,25 @@
 
 namespace bustub {
 
-template<typename KeyType>
-void PrintState(const std::vector<HashTableSlot<KeyType>>& vec){
-  for(const HashTableSlot<KeyType>& s: vec){
-    std::cout<< s.state_<< " ";
+template <typename KeyType>
+void PrintState(const std::vector<HashTableSlot<KeyType>> &vec) {
+  for (const HashTableSlot<KeyType> &s : vec) {
+    std::cout << s.state_ << " ";
   }
-  std::cout<<std::endl;
+  std::cout << std::endl;
 }
 
 template <typename KeyType, typename Hash, typename KeyEqual>
 RobinHoodHashSet<KeyType, Hash, KeyEqual>::RobinHoodHashSet(size_t capacity, Hash hasher, KeyEqual key_equal) {
   /** @TODO(student) Initialize the fixed-capacity bucket array and store the supplied functors. */
-  if(capacity<=0){
+  if (capacity <= 0) {
     throw std::invalid_argument("RobinHoodHashSet: capacity should be >0");
   }
-  
+
   this->capacity_ = capacity;
   this->hash_fn_ = hasher;
   this->key_equal_fn_ = key_equal;
-  this->channel_capacity_ = capacity*3;
+  this->channel_capacity_ = capacity * 3;
 
   this->hash_table_ = std::vector<HashTableSlot<KeyType>>(capacity);
   this->size_.store(0);
@@ -81,61 +81,58 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::operator=(RobinHoodHashSet &&oth
 
 template <typename KeyType, typename Hash, typename KeyEqual>
 auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Insert(const KeyType &key) -> bool {
-  /** @TODO(student) Insert with linear probing, Robin Hood displacement, and safe concurrent access. */  
+  /** @TODO(student) Insert with linear probing, Robin Hood displacement, and safe concurrent access. */
 
-  
   // std::lock_guard loc1k(global_lock_);
-  
+
   size_t chanel_idx = this->hash_fn_(key) % this->channel_capacity_;
   std::lock_guard lock(chanels_[chanel_idx]);
   // std::cout<<"Sf: "<<chanel_idx<<std::endl;
-  
-  if(Contains(key)) return true;
+
+  if (Contains(key)) return true;
   // if do not contains what if someone inserts same kay here
 
-/* 
-  atomic size++, and compare to capcaicy
-*/
+  /*
+    atomic size++, and compare to capcaicy
+  */
   size_t current_size = size_.load();
 
-  while (current_size<capacity_)
-  {
-    if(size_.compare_exchange_strong(current_size,current_size+1)){
+  while (current_size < capacity_) {
+    if (size_.compare_exchange_strong(current_size, current_size + 1)) {
       break;
     }
   }
 
-  if(current_size==capacity_) return false;
-  
-  
+  if (current_size == capacity_) return false;
+
   // {
   //   std::lock_guard lock(global_lock_);
   //   if(size_.load()==capacity_) return false;
   //   size_++;
   // }
-  BUSTUB_ENSURE(size_.load()<=capacity_,"size must be less/eq than capacity");
+  BUSTUB_ENSURE(size_.load() <= capacity_, "size must be less/eq than capacity");
 
   size_t home_bucket = this->hash_fn_(key) % this->capacity_;
   size_t cur_probe = 0;
   KeyType cur_key = key;
 
-  for(size_t i = home_bucket;i!=home_bucket+capacity_; i++){
-    HashTableSlot<KeyType>& slot = (hash_table_[i%capacity_]);
+  for (size_t i = home_bucket; i != home_bucket + capacity_; i++) {
+    HashTableSlot<KeyType> &slot = (hash_table_[i % capacity_]);
     std::lock_guard<std::mutex> g(slot.lock_);
-    if(slot.state_ == SlotState::OCCUPIED){
-      if(key_equal_fn_(key,slot.key_)) return true;
+    if (slot.state_ == SlotState::OCCUPIED) {
+      if (key_equal_fn_(key, slot.key_)) return true;
 
-      if(cur_probe>slot.probe_){
+      if (cur_probe > slot.probe_) {
         // std::multiset<size_t>::iterator it = probe_store_.find(slot.probe_);
         // if(it!=probe_store_.end()){
         //   probe_store_.erase(it);
         // }
         // probe_store_.insert(cur_probe);
 
-        std::swap(cur_probe,slot.probe_);
-        std::swap(cur_key,slot.key_);
+        std::swap(cur_probe, slot.probe_);
+        std::swap(cur_key, slot.key_);
       }
-    }else{
+    } else {
       // probe_store_.insert(cur_probe);
       slot.probe_ = cur_probe;
       slot.key_ = cur_key;
@@ -153,20 +150,19 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Insert(const KeyType &key) -> bo
 template <typename KeyType, typename Hash, typename KeyEqual>
 auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Remove(const KeyType &key) -> bool {
   /** @TODO(student) Mark an occupied matching slot as a tombstone without breaking concurrent operations. */
-  
+
   // size_t chanel_idx = this->hash_fn_(key) % this->channel_capacity_;
   // std::lock_guard lock(chanels_[chanel_idx]);
   // std::lock_guard lock(global_lock_);
   // size_t b = GetBucket(key);
 
-  
   size_t home_bucket = this->hash_fn_(key) % this->capacity_;
-  for(size_t i = home_bucket;i!=home_bucket+capacity_; i++){
-    HashTableSlot<KeyType>& slot = (hash_table_[i%capacity_]);
+  for (size_t i = home_bucket; i != home_bucket + capacity_; i++) {
+    HashTableSlot<KeyType> &slot = (hash_table_[i % capacity_]);
     std::lock_guard<std::mutex> g(slot.lock_);
-    if(slot.state_ == SlotState::EMPTY) return false;
+    if (slot.state_ == SlotState::EMPTY) return false;
     // if(slot.state_ != SlotState::OCCUPIED) continue;
-    if(slot.state_ == SlotState::OCCUPIED && key_equal_fn_(slot.key_,key)){
+    if (slot.state_ == SlotState::OCCUPIED && key_equal_fn_(slot.key_, key)) {
       // std::multiset<size_t>::iterator it = probe_store_.find(slot.probe_);
       // probe_store_.erase(it);
       slot.state_ = SlotState::TOMBSTONE;
@@ -181,8 +177,8 @@ template <typename KeyType, typename Hash, typename KeyEqual>
 void RobinHoodHashSet<KeyType, Hash, KeyEqual>::Clear() {
   /** @TODO(student) Remove occupied entries and tombstones while preserving capacity. */
   // std::lock_guard lock(global_lock_);
-  for(size_t i = 0;i!=capacity_; i++){
-    HashTableSlot<KeyType>& slot = (hash_table_[i]);
+  for (size_t i = 0; i != capacity_; i++) {
+    HashTableSlot<KeyType> &slot = (hash_table_[i]);
     std::lock_guard<std::mutex> g(slot.lock_);
     slot.state_ = SlotState::EMPTY;
   }
@@ -193,28 +189,28 @@ void RobinHoodHashSet<KeyType, Hash, KeyEqual>::Clear() {
 template <typename KeyType, typename Hash, typename KeyEqual>
 auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Contains(const KeyType &key) const -> bool {
   /** @TODO(student) Probe through tombstones and stop only where correctness permits. */
-  
+
   size_t b = GetBucket(key);
   // std::cout<<"contains: "<<key<<" "<<b<<std::endl;
   // PrintState(hash_table_);
-  return b!=capacity_;
+  return b != capacity_;
 }
 
 template <typename KeyType, typename Hash, typename KeyEqual>
 auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::GetBucket(const KeyType &key) const -> size_t {
   /** @TODO(student) Return the physical bucket holding key, or BucketCount() when absent. */
   std::lock_guard lock(global_lock_);
-  
+
   // size_t chanel_idx = this->hash_fn_(key) % this->channel_capacity_;
   // std::lock_guard lock(chanels_[chanel_idx]);
-  
+
   size_t home_bucket = this->hash_fn_(key) % this->capacity_;
-  for(size_t i = home_bucket;i!=home_bucket+capacity_; i++){
-    const HashTableSlot<KeyType>& slot = (hash_table_[i%capacity_]);
+  for (size_t i = home_bucket; i != home_bucket + capacity_; i++) {
+    const HashTableSlot<KeyType> &slot = (hash_table_[i % capacity_]);
     std::lock_guard<std::mutex> g(slot.lock_);
-    if(slot.state_ == SlotState::EMPTY) return capacity_;
+    if (slot.state_ == SlotState::EMPTY) return capacity_;
     // if(slot.state_ != SlotState::OCCUPIED) continue;
-    if(slot.state_ == SlotState::OCCUPIED && key_equal_fn_(slot.key_,key)) return i%capacity_;
+    if (slot.state_ == SlotState::OCCUPIED && key_equal_fn_(slot.key_, key)) return i % capacity_;
   }
   return capacity_;
 }
@@ -234,7 +230,7 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::Capacity() const -> size_t {
 template <typename KeyType, typename Hash, typename KeyEqual>
 auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::LoadFactor() const -> double {
   /** @TODO(student) Return Size() / Capacity(), including moved-from handling. */
-  return static_cast<double>(Size())/static_cast<double>(capacity_);
+  return static_cast<double>(Size()) / static_cast<double>(capacity_);
 }
 
 template <typename KeyType, typename Hash, typename KeyEqual>
@@ -245,12 +241,12 @@ auto RobinHoodHashSet<KeyType, Hash, KeyEqual>::MaxProbeDistance() const -> size
   // return *probe_store_.rbegin();
   size_t max = 0;
   // size_t home_bucket = this->hash_fn_(key) % this->capacity_;
-  for(size_t i = 0;i!=capacity_;i++){
-    const HashTableSlot<KeyType>& slot = hash_table_[i];
+  for (size_t i = 0; i != capacity_; i++) {
+    const HashTableSlot<KeyType> &slot = hash_table_[i];
     std::lock_guard<std::mutex> g(slot.lock_);
     // if(slot.state_ == SlotState::EMPTY) return capacity_;
     // if(slot.state_ != SlotState::OCCUPIED) continue;
-    if(slot.state_ == SlotState::OCCUPIED) max = std::max(max,slot.probe_);
+    if (slot.state_ == SlotState::OCCUPIED) max = std::max(max, slot.probe_);
   }
   return max;
 }

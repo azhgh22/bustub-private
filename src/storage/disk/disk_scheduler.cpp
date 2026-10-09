@@ -39,19 +39,18 @@ DiskScheduler::~DiskScheduler() {
  * @param requests The requests to be scheduled.
  */
 void DiskScheduler::Schedule(std::vector<DiskRequest> &requests) {
-  for(DiskRequest& req : requests){
+  for (DiskRequest &req : requests) {
     request_queue_.Put(std::move(req));
   }
 }
 
-
-void DiskScheduler::HandleRead(page_id_t page_id,char* data, std::promise<bool> callback){
-  disk_manager_->ReadPage(page_id,data);
+void DiskScheduler::HandleRead(page_id_t page_id, char *data, std::promise<bool> callback) {
+  disk_manager_->ReadPage(page_id, data);
   callback.set_value(true);
 }
 
-void DiskScheduler::HandleWrite(page_id_t page_id,char* data, std::promise<bool> callback){
-  disk_manager_->WritePage(page_id,data);
+void DiskScheduler::HandleWrite(page_id_t page_id, char *data, std::promise<bool> callback) {
+  disk_manager_->WritePage(page_id, data);
   callback.set_value(true);
 }
 
@@ -64,18 +63,18 @@ void DiskScheduler::HandleWrite(page_id_t page_id,char* data, std::promise<bool>
  * return until ~DiskScheduler() is called. At that point you need to make sure that the function does return.
  */
 void DiskScheduler::StartWorkerThread() {
-  while (true){
+  while (true) {
     std::optional<DiskRequest> req = request_queue_.Get();
-    if(!req.has_value()) break;
-
-    if(req->is_write_){
-      HandleWrite(req->page_id_,req->data_,std::move(req->callback_));
-    }else{
-      HandleRead(req->page_id_,req->data_,std::move(req->callback_));
+    if (!req.has_value()) {
+      break;
     }
-    
+
+    if (req->is_write_) {
+      HandleWrite(req->page_id_, req->data_, std::move(req->callback_));
+    } else {
+      HandleRead(req->page_id_, req->data_, std::move(req->callback_));
+    }
   }
-  
 }
 
 }  // namespace bustub

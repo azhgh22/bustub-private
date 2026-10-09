@@ -22,7 +22,7 @@ namespace bustub {
 
 const size_t FRAMES = 10;
 
-TEST(PageGuardTest, DISABLED_DropTest) {
+TEST(PageGuardTest, DropTest) {
   auto disk_manager = std::make_shared<DiskManagerUnlimitedMemory>();
   auto bpm = std::make_shared<BufferPoolManager>(FRAMES, disk_manager.get());
 
@@ -93,6 +93,11 @@ TEST(PageGuardTest, DISABLED_DropTest) {
   strcpy(mutable_guard.GetDataMut(), "data");  // NOLINT
   mutable_guard.Drop();
 
+  ASSERT_EQ(0, bpm->GetPinCount(mutable_page_id));
+
+  auto immutable_guard1 = bpm->ReadPage(mutable_page_id);
+  ASSERT_EQ(0, std::strcmp("data", immutable_guard1.GetData()));
+  immutable_guard1.Drop();
   {
     // Fill up the BPM again.
     std::vector<WritePageGuard> guards;
@@ -102,6 +107,7 @@ TEST(PageGuardTest, DISABLED_DropTest) {
       ASSERT_EQ(1, bpm->GetPinCount(new_pid));
     }
   }
+  ASSERT_EQ(std::nullopt, bpm->GetPinCount(mutable_page_id));
 
   // Fetching the flushed page should result in seeing the changed value.
   auto immutable_guard = bpm->ReadPage(mutable_page_id);
@@ -111,7 +117,7 @@ TEST(PageGuardTest, DISABLED_DropTest) {
   disk_manager->ShutDown();
 }
 
-TEST(PageGuardTest, DISABLED_MoveTest) {
+TEST(PageGuardTest, MoveTest) {
   auto disk_manager = std::make_shared<DiskManagerUnlimitedMemory>();
   auto bpm = std::make_shared<BufferPoolManager>(FRAMES, disk_manager.get());
 
